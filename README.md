@@ -151,7 +151,7 @@ Single file games, you can use
 
     <script>
         const repo = "un-zynq/singlefilegames";
-        const commit = "16f61a704087d5d4f6500fd0f6930fde74c37ee0";
+        const commit = "latest";
         const menu = document.getElementById('menu');
         const container = document.getElementById('container');
         const placeholder = document.getElementById('placeholder');
