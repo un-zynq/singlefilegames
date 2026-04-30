@@ -96,7 +96,7 @@ Single file games, you can use
             width: 100%; 
             height: 100%; 
             border: none; 
-            background: transparent; 
+            background: white; 
         }
 
         .status-layer { 
@@ -151,11 +151,12 @@ Single file games, you can use
 
     <script>
         const repo = "un-zynq/singlefilegames";
-        const commit = "latest";
+        const commit = "main";
         const menu = document.getElementById('menu');
         const container = document.getElementById('container');
         const placeholder = document.getElementById('placeholder');
         const loader = document.getElementById('loading-screen');
+        let currentBlobUrl = null;
 
         async function init() {
             try {
@@ -184,6 +185,11 @@ Single file games, you can use
             loader.classList.remove('hidden');
             container.innerHTML = "";
 
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+            }
+
             try {
                 const url = `https://cdn.jsdelivr.net/gh/${repo}@${commit}/${path}`;
                 const res = await fetch(url);
@@ -193,8 +199,12 @@ Single file games, you can use
                 frame.id = "active-game";
                 container.appendChild(frame);
                 
-                frame.onload = () => loader.classList.add('hidden');
-                frame.srcdoc = html;
+                const doc = frame.contentWindow.document;
+                doc.open();
+                doc.write(html);
+                doc.close();
+
+                loader.classList.add('hidden');
             } catch (err) {
                 loader.classList.add('hidden');
                 placeholder.classList.remove('hidden');
