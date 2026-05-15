@@ -1,0 +1,12 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="position: fixed; top: 0; left: 0;">
+<style>[...]</style>
+  <foreignObject x="0" y="0" width="100%" height="100%">
+    <body xmlns="http://www.w3.org/1999/xhtml">
+    <meta content='width=device-width, initial-scale=1.0' name='viewport'></meta>
+	 <iframe style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;" id="test"></iframe>
+         <script>let l = atob("PCFET0NUWVBFIGh0bWw+PGh0bWwgbGFuZz0iZW4tdXMiPjxoZWFkPjxiYXNlIGhyZWY9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC96eW5xLXBsYXRmb3JtL2EtZGFuY2Utb2YtZmlyZS1hbmQtaWNlLyI+PG1ldGEgY2hhcnNldD0idXRmLTgiPjxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij48c2NyaXB0IHNyYz0iYWRTZW5zZS5qcyI+PC9zY3JpcHQ+PHNjcmlwdCBzcmM9IkJ1aWxkL1VuaXR5TG9hZGVyLmpzIj48L3NjcmlwdD48c2NyaXB0IHNyYz0iL2pzL21haW4uanMiPjwvc2NyaXB0PjxzY3JpcHQ+dmFyIGdhbWVJbnN0YW5jZT1Vbml0eUxvYWRlci5pbnN0YW50aWF0ZSgiZ2FtZUNvbnRhaW5lciIsIkJ1aWxkL2Fkb2ZhaWlpNC5qc29uIik7PC9zY3JpcHQ+PHN0eWxlPmh0bWx7YmFja2dyb3VuZC1jb2xvcjojMjAyMTI0fTwvc3R5bGU+PC9oZWFkPjxib2R5IHN0eWxlPSJtYXJnaW46MDtvdmVyZmxvdzpoaWRkZW4iPjxkaXYgaWQ9ImdhbWVDb250YWluZXIiIHN0eWxlPSJ3aWR0aDo4MDBweDtoZWlnaHQ6NDAwcHg7bWFyZ2luOmF1dG87cG9zaXRpb246YWJzb2x1dGU7bGVmdDo1MCU7dG9wOjUwJTstd2Via2l0LXRyYW5zZm9ybTp0cmFuc2xhdGUoLTUwJSwtNTAlKTt0cmFuc2Zvcm06dHJhbnNsYXRlKC01MCUsLTUwJSkiPjwvZGl2PjwvYm9keT48L2h0bWw+"); var theIframe = document.getElementById('test'); theIframe.srcdoc = l;</script>
+    </body>
+  </foreignObject>
+      <script><![CDATA[...]]></script>
+</svg>
