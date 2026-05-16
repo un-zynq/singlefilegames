@@ -1,10 +1,13 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Arcane · Game Library</title>
+  
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
   <style>
     /* reset & design tokens */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -359,6 +362,7 @@
 
 <script>
   (function() {
+    const TOKEN = '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'; // I know it is public but it doesn't do much.
     const OWNER = 'un-zynq';
     const REPO = 'singlefilegames';
     const BRANCH = 'main';
@@ -370,6 +374,8 @@
     let sortOrder = 'alpha';
     let activeCard = null;
     let activeItem = null;
+    let useAuth = true;
+    const preloadedUrls = new Set();
 
     // DOM elements
     const $search = document.getElementById('search');
@@ -399,6 +405,21 @@
       return path.replace(/\.html$/i, '').replace(/[-_]/g, ' ').trim() || 'untitled';
     }
 
+    function preloadGameCdn(path) {
+      if (!commitSha) return;
+      const url = `https://cdn.jsdelivr.net/gh/${OWNER}/${REPO}@${commitSha}/${path}`;
+      
+      if (preloadedUrls.has(url)) return;
+      preloadedUrls.add(url);
+
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.href = url;
+      link.as = 'fetch';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    }
+
     function esc(str) {
       const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
     }
@@ -417,20 +438,45 @@
       return '▸';
     }
 
+    async function smartFetch(url) {
+      const headers = { 'Accept': 'application/vnd.github.v3+json' };
+      if (useAuth && TOKEN) {
+        headers['Authorization'] = `token ${TOKEN}`;
+      }
+
+      let res = await fetch(url, { headers });
+
+      if (!res.ok && (res.status === 403 || res.status === 401) && useAuth) {
+        console.warn(`Token overschreden of geweigerd (HTTP ${res.status}). Fallback actief.`);
+        useAuth = false;
+        const fallbackHeaders = { 'Accept': 'application/vnd.github.v3+json' };
+        res = await fetch(url, { fallbackHeaders });
+      }
+
+      return res;
+    }
+
     async function fetchCommit() {
-      const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
+      const r = await smartFetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
       if (!r.ok) throw new Error(`ref ${r.status}`);
       return (await r.json()).object.sha;
     }
 
     async function fetchGameList(sha) {
-      const cr = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/commits/${sha}`);
+      const cr = await smartFetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/commits/${sha}`);
       if (!cr.ok) throw new Error(`commit ${cr.status}`);
       const c = await cr.json();
-      const tr = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${c.tree.sha}?recursive=1`);
+      const tr = await smartFetch(`https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${c.tree.sha}?recursive=1`);
       if (!tr.ok) throw new Error(`tree ${tr.status}`);
       const t = await tr.json();
-      return (t.tree || []).filter(f => f.type === 'blob' && f.path && f.path.endsWith('.html')).map(f => ({ path: f.path }));
+      
+      // CRITIEK FILTER: Alleen bestanden die .html zijn EN GEEN slash (/) bevatten (dus puur top-level/root)
+      return (t.tree || []).filter(f => 
+        f.type === 'blob' && 
+        f.path && 
+        f.path.endsWith('.html') && 
+        !f.path.includes('/')
+      ).map(f => ({ path: f.path }));
     }
 
     function filtered() {
@@ -465,6 +511,9 @@
         btn.className = 'game-item';
         btn.setAttribute('data-path', game.path);
         btn.innerHTML = `<span class="dot"></span>${esc(name)}`;
+        
+        btn.addEventListener('mouseenter', () => preloadGameCdn(game.path));
+        
         btn.addEventListener('click', () => {
           const card = document.querySelector(`.game-card[data-path="${CSS.escape(game.path)}"]`);
           if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); card.click(); }
@@ -474,36 +523,24 @@
       }
     }
 
-    // ---- ALERT REWRITE + MUTE voor "Exported games won't work..." ---- 
-    // Wanneer we de game in de iframe of nieuw tabblad laden: we injecteren een script dat de window.alert overschrijft.
-    // De core functie: elke geopende game krijgt een patched alert die controleert of de string de specifieke
-    // waarschuwing bevat. Zo ja -> helemaal niet tonen, anders wordt de originele alert getoond.
     function injectAlertFilter(tabWindow) {
       if (!tabWindow) return;
-      // we overschrijven alert in de context van de game (tab).
-      // We bewaren de originele alert om later eventueel te kunnen gebruiken, maar we filteren.
       const originalAlert = tabWindow.alert;
       tabWindow.alert = function(message) {
         if (typeof message === 'string') {
           const lowerMsg = message.toLowerCase();
-          // detecteer de exacte zin of variaties: "Exported games won't work until you upload them."
-          // ook de file:/// protocol waarschuwing.
           if (lowerMsg.includes("exported games won't work") ||
               lowerMsg.includes("until you upload them") ||
               lowerMsg.includes("file:/// protocol") ||
               lowerMsg.includes("browsers block many features") ||
               lowerMsg.includes("for security reasons") ||
               lowerMsg.includes("won't work until you upload")) {
-            // volledig negeren, geen popup, geen console error (stille onderdrukking)
             return;
           }
         }
-        // andere alerts worden normaal getoond via originalAlert
         if (originalAlert) originalAlert.call(tabWindow, message);
         else tabWindow.alert(message);
       };
-      // Ook confirm/prompt kunnen we optional clean houden, maar focus ligt op alert.
-      // Om robuust te zijn: voor de zekerheid ook console.warnings die uit die game komen? Niet nodig.
     }
 
     async function launch(path, elem) {
@@ -535,7 +572,6 @@
         const tab = window.open('about:blank', '_blank');
         if (!tab) { window.open(url, '_blank'); return; }
         
-        // toon "loading…" snel
         tab.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${name}</title><style>body{background:#080809;color:#888;display:flex;align-items:center;justify-content:center;font-family:monospace;height:100vh;margin:0;font-size:12px}</style></head><body>loading game…</body></html>`);
         tab.document.close();
         
@@ -543,14 +579,9 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let html = await res.text();
         
-        // --- CRITICAL: vóór het injecteren van de HTML voegen we een script toe dat de alert overschrijft.
-        // We willen dat de game zelf zo min mogelijk merkt. We doen dit door de HTML te parsen en een 
-        // <script> blok aan de <head> toe te voegen dat de alert filtert, vóórdat de game logica draait.
-        // Dit zorgt dat zelfs als de game een alert() oproept bij load, die wordt opgevangen.
         const filterScript = `
         <script>
           (function() {
-            // volledige preventie van de storende melding "Exported games won't work ..." etc.
             const nativeAlert = window.alert;
             window.alert = function(msg) {
               if (typeof msg === 'string') {
@@ -561,18 +592,15 @@
                     lower.includes('browsers block many features') ||
                     lower.includes('for security reasons') ||
                     lower.includes("won't work until you upload")) {
-                  // volledig negeren — NO POPUP, NO CONSOLE
                   return;
                 }
               }
               nativeAlert.call(window, msg);
             };
-            // extra safe: override console error die specifiek deze tekst bevat? optioneel maar niet vereist.
           })();
         <\/script>
         `;
         
-        // Plaats filterScript direct na de opening <head> of bovenaan in de HTML.
         if (html.match(/<head[^>]*>/i)) {
           html = html.replace(/<head[^>]*>/i, match => match + filterScript);
         } else if (html.match(/<html[^>]*>/i)) {
@@ -581,18 +609,11 @@
           html = filterScript + html;
         }
         
-        // Schrijf de gepatchte HTML naar de tab
         tab.document.open();
         tab.document.write(html);
         tab.document.close();
         
-        // Extra verzekering: Ook in de reeds geladen context overschrijven we alert (soms als de game na onload nog scripts draait)
-        // maar de bovenstaande injectie vangt alle window.alert calls vanaf start af. voor de dubbele zekerheid:
-        try {
-          injectAlertFilter(tab);
-        } catch(e) { /* silent */ }
-        
-        // Titel aanpassen als mogelijk
+        try { injectAlertFilter(tab); } catch(e) {}
         try { tab.document.title = name; } catch(_) {}
         tab.focus();
       } catch (err) {
@@ -622,6 +643,9 @@
         card.className = 'game-card';
         card.setAttribute('data-path', game.path);
         card.innerHTML = `<div class="card-icon">${icon}</div><div class="game-name">${esc(name)}</div>`;
+        
+        card.addEventListener('mouseenter', () => preloadGameCdn(game.path));
+        
         card.addEventListener('click', e => { e.stopPropagation(); launch(game.path, card); });
         $grid.appendChild(card);
       }
@@ -642,10 +666,10 @@
         commitSha = sha;
         const games = await fetchGameList(sha);
         allGames = games;
-        if (!allGames.length) throw new Error('No HTML files found');
+        if (!allGames.length) throw new Error('No HTML files found in root');
         render();
         $statusDot.className = 'status-dot';
-        toast(`${allGames.length} games loaded`);
+        toast(`${allGames.length} root games loaded`);
       } catch (err) {
         setState('error');
         $errorMsg.textContent = err.message || 'Connection error';
