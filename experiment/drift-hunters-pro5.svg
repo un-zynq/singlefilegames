@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="position:fixed;top:0;left:0;background:#000;">
+  <foreignObject x="0" y="0" width="100%" height="100%">
+    <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0;padding:0;background:#000;overflow:hidden;">
+      <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+      <iframe style="position:fixed;top:0;left:0;bottom:0;right:0;width:100%;height:100%;border:none;margin:0;padding:0;overflow:auto;z-index:999999;background:#000;" id="gameFrame" title="game" loading="eager" allow="fullscreen; autoplay; clipboard-write"></iframe>
+      <script>
+        (function(){
+          const gameUrl = "https://cdn.jsdelivr.net/gh/un-zynq/singlefilegames/drift-hunters-pro.html";
+          
+          fetch(gameUrl)
+            .then(response => response.text())
+            .then(html => {
+              // Patch de HTML zodat Unity blob URLs accepteert
+              let patchedHtml = html;
+              
+              // Fix de loadSplitData functie
+              patchedHtml = patchedHtml.replace(
+                /config\.dataUrl = dataUrl;/g,
+                'config.dataUrl = dataUrl; console.log("Data URL set to:", dataUrl);'
+              );
+              
+              // Fix de URL constructor error
+              patchedHtml = patchedHtml.replace(
+                /new URL\(/g,
+                'new (function(url, base) { try { return new URL(url, base); } catch(e) { console.warn("URL constructor error:", e); return { href: url }; } })('
+              );
+              
+              // Zorg dat de base tag behouden blijft
+              if (!patchedHtml.includes('<base href="')) {
+                patchedHtml = patchedHtml.replace('<head>', '<head><base href="https://cdn.jsdelivr.net/gh/zynq-platform/drift-hunters-pro/">');
+              }
+              
+              const blob = new Blob([patchedHtml], { type: 'text/html' });
+              const blobUrl = URL.createObjectURL(blob);
+              
+              const iframe = document.getElementById('gameFrame');
+              iframe.src = blobUrl;
+              
+              iframe.onload = function() {
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+              };
+            })
+            .catch(error => {
+              const iframe = document.getElementById('gameFrame');
+              const doc = iframe.contentWindow.document;
+              doc.open();
+              doc.write('<body style="background:#000;color:#fff;font-family:monospace;padding:20px;">Error: ' + error.message + '</body>');
+              doc.close();
+            });
+        })();
+      </script>
+    </body>
+  </foreignObject>
+</svg>
