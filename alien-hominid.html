@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #000;
+      }
+      #ruffle {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/zynq-platform/alien-hominid/ruffle.js"></script>
+  </head>
+  <body>
+
+    <div id="ruffle"></div>
+
+    <script>
+      window.RufflePlayer = window.RufflePlayer || {};
+      
+      window.addEventListener("load", () => {
+        const ruffle = window.RufflePlayer.newest();
+        if (!ruffle) return;
+        
+        const player = ruffle.createPlayer();
+        
+        player.id = "player";
+        player.style.width = "100%";
+        player.style.height = "100%";
+        
+        document.getElementById("ruffle").appendChild(player);
+        
+        player.load("https://cdn.jsdelivr.net/gh/zynq-platform/alien-hominid/alienhominid.swf");
+      });
+    </script>
+  </body>
+</html>
