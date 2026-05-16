@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="https://cdn.jsdelivr.net/gh/zynq-platform/drift-hunters-2/">
+  
+  <style>
+    html, body {
+      background: #000;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+    }
+
+    #gameContainer, #gameContainer canvas {
+      position: absolute;
+    }
+
+    #spinner-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      transition: opacity 0.5s ease;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #333;
+      border-top: 5px solid #4caf50;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <link rel="canonical" href="https://freezenova.ubg235.com/?drift-hunters-2024.html" />
+
+  <script src="drift-hunters-2.js"></script>
+  <script src="cloner-v3-3.js"></script>
+</head>
+
+<body>
+  <div id="progress-container" style="position:fixed; top:0; left:0; width:100%; height:5px; background:#222; z-index: 30;">
+    <div id="progress" style="width:0%; height:100%; background:#4caf50; transition:width 0.2s;"></div>
+  </div>
+
+  <div id="spinner-container">
+    <div class="spinner"></div>
+  </div>
+  
+  <div id="gameContainer">
+    <canvas id="unity-canvas"></canvas>
+    <script src="Build/DriftHunters_V156_Low_BR.loader.js"></script>
+    <script>
+      const canvas = document.querySelector("#unity-canvas");
+      const progressBar = document.querySelector("#progress");
+      const spinnerContainer = document.querySelector("#spinner-container");
+      
+      const config = {
+        dataUrl: "Build/DriftHunters_V156_Low_BR.data.unityweb",
+        frameworkUrl: "Build/DriftHunters_V156_Low_BR.framework.js.unityweb",
+        codeUrl: "Build/DriftHunters_V156_Low_BR.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "FreezeNova",
+        productName: "Drift Hunters",
+        productVersion: "0.1",
+      };
+
+      const scaleToFit = true;
+
+      function progressHandler(progress) {
+        progressBar.style.width = `${progress * 100}%`;
+        if (progress === 1) {
+          document.querySelector("#progress-container").style.display = "none";
+        }
+      }
+
+      function onResize() {
+        const container = canvas.parentElement;
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+
+        if (scaleToFit) {
+          const r = 540 / 960;
+          if (w * r > window.innerHeight) {
+            w = Math.min(w, Math.ceil(h / r));
+          }
+          h = Math.floor(w * r);
+        } else {
+          w = 960;
+          h = 540;
+        }
+
+        container.style.width = canvas.style.width = `${w}px`;
+        container.style.height = canvas.style.height = `${h}px`;
+        container.style.top = `${Math.floor((window.innerHeight - h) / 2)}px`;
+        container.style.left = `${Math.floor((window.innerWidth - w) / 2)}px`;
+
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+      }
+
+      createUnityInstance(canvas, config, progressHandler).then((instance) => {
+        window.gameInstance = instance;
+        onResize();
+        
+        spinnerContainer.style.opacity = "0";
+        setTimeout(() => {
+          spinnerContainer.style.display = "none";
+        }, 500);
+      });
+
+      window.addEventListener('resize', onResize);
+      onResize();
+    </script>
+  </div>
+</body>
+</html>
