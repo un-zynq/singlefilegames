@@ -1,0 +1,147 @@
+<html lang="en-us">
+   <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+      <style>
+         html{box-sizing:border-box}*,:after,:before{box-sizing:inherit}body,html{height:100%;margin:0;overflow:hidden;background:#231f20;font-family:sans-serif}#unity-container{width:100%;height:100%;position:relative}#unity-canvas{width:100%;height:100%;display:block}#loading-cover{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:#231f20;color:#aaa;font-size:1.2rem;font-weight:400}
+      </style>
+   </head>
+   <body class="dark">
+      <div id="unity-container">
+         <canvas id="unity-canvas"></canvas>
+      </div>
+      <div id="loading-cover">
+         <div id="loader-text">0%</div>
+      </div>
+      <script>
+const buildUrl = "https://cdn.jsdelivr.net/gh/zynq-platform/race-survival-arena-king/Build/";
+
+async function checkFileExists(url) {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch(e) {
+    return false;
+  }
+}
+
+async function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
+    document.body.appendChild(script);
+  });
+}
+
+async function initGame() {
+  try {
+    const minJsUrl = buildUrl + "/min.js";
+    const fileExists = await checkFileExists(minJsUrl);
+    
+    if (!fileExists) {
+      console.error("min.js not found at:", minJsUrl);
+      loaderText.textContent = "Error: Game files not found";
+      return;
+    }
+    
+    console.log("Loading Unity from:", buildUrl);
+    
+    await loadScript(minJsUrl);
+    
+    const config = {
+      dataUrl: buildUrl + "/cardata.js",
+      frameworkUrl: buildUrl + "/carframework.js", 
+      codeUrl: buildUrl + "/carwasm.js",
+      streamingAssetsUrl: buildUrl + "/StreamingAssets"
+    };
+    
+    const canvas = document.querySelector("#unity-canvas");
+    const loadingCover = document.querySelector("#loading-cover");
+    const loaderText = document.querySelector("#loader-text");
+    
+    createUnityInstance(canvas, config, (progress) => {
+      loaderText.textContent = Math.round(progress * 100) + "%";
+    }).then((unityInstance) => {
+      window.myGameInstance = unityInstance;
+      loadingCover.style.display = "none";
+      console.log("Unity game loaded successfully");
+    }).catch((error) => {
+      console.error("Unity failed to load:", error);
+      loaderText.textContent = "Error loading game";
+    });
+    
+  } catch(error) {
+    console.error("Failed to initialize game:", error);
+    loaderText.textContent = "Error: " + error.message;
+  }
+}
+
+var playerData = "noData";
+var environmentData = "null";
+var cloudSaves = "noData";
+let myGameInstance = null;
+
+function GameReadyAPI(){
+  try{ if(window.ysdk && window.ysdk.features && window.ysdk.features.LoadingAPI) window.ysdk.features.LoadingAPI.ready(); }catch(e){}
+}
+
+function InitSDK(){ InitPlayer(); }
+function InitGame(e,t,n){ n && GameReadyAPI(); InitPlayer(); }
+
+function NotAuthorized(){
+  if(window.myGameInstance) {
+    window.myGameInstance.SendMessage("YandexGame","SetInitializationSDK",
+      JSON.stringify({playerAuth:"resolved",playerName:"Guest",playerId:"123",playerPhoto:"null"}));
+  }
+}
+
+function InitPlayer(){ NotAuthorized(); if(window.focus) window.focus(); }
+function LanguageRequest(){ if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","SetLanguage","en"); }
+function RequestingEnvironmentData(){ if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","SetEnvironmentData",JSON.stringify({language:"en"})); }
+
+function FullAdShow(){
+  if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","OpenFullAd");
+  setTimeout(()=>{ if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","CloseFullAd","false"); },100);
+}
+
+function RewardedShow(e){
+  if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","OpenVideo");
+  setTimeout(()=>{
+    if(window.myGameInstance) {
+      window.myGameInstance.SendMessage("YandexGame","RewardVideo",e);
+      window.myGameInstance.SendMessage("YandexGame","CloseVideo");
+    }
+  },100);
+}
+
+function StickyAdActivity(e){}
+function SaveCloud(e){ localStorage.setItem("unity_save",e); }
+function LoadCloud(){ const e=localStorage.getItem("unity_save")||"{}"; if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","SetLoadSaves",e); }
+
+window.ysdk = {
+  adv:{ showFullscreenAdv:{ callbacks:{} } },
+  features:{ LoadingAPI:{ ready:()=>{} } },
+  feedback:{ canReview:()=>Promise.resolve({value:!1}), requestReview:()=>Promise.resolve() },
+  shortcut:{ showPrompt:()=>Promise.resolve({outcome:"rejected"}) },
+  getLeaderboards:()=>Promise.resolve(),
+  getPayments:()=>Promise.reject(),
+  getPlayer:()=>Promise.resolve({ setData:()=>Promise.resolve(), getData:()=>Promise.resolve({}) })
+};
+
+function InitPayments(){}
+function BuyPayments(){}
+function GetPayments(){}
+function InitLeaderboard(){ if(window.myGameInstance) window.myGameInstance.SendMessage("YandexGame","InitializedLB"); }
+function SetLeaderboardScores(){}
+function GetLeaderboardScores(){}
+function Review(){}
+function PromptShow(){}
+function PaintRBT(){}
+function StaticRBTDeactivate(){}
+
+initGame();
+</script>
+   </body>
+</html>
