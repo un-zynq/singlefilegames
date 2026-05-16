@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="position: fixed; top: 0; left: 0;">
+  <foreignObject x="0" y="0" width="100%" height="100%">
+    <body xmlns="http://www.w3.org/1999/xhtml" style="margin:0; padding:0; background:#202124;">
+      <meta content='width=device-width, initial-scale=1.0' name='viewport'></meta>
+      <iframe style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;" id="gameFrame"></iframe>
+      <script>
+        (function() {
+          const GAME_URL = "https://cdn.jsdelivr.net/gh/un-zynq/singlefilegames/eaglercraft-1-12-2.html";
+          const frame = document.getElementById('gameFrame');
+
+          fetch(GAME_URL)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+              }
+              return response.text();
+            })
+            .then(htmlContent => {
+              const blob = new Blob([htmlContent], { type: 'text/html' });
+              const blobUrl = URL.createObjectURL(blob);
+              frame.src = blobUrl;
+
+              // Optioneel: blob URL vrijgeven als iframe eenmaal geladen is
+              frame.onload = function() {
+                URL.revokeObjectURL(blobUrl);
+              };
+            })
+            .catch(error => {
+              console.error("Fout bij laden van het spel:", error);
+              // Toon foutmelding in de iframe
+              frame.srcdoc = `<html><body style="background:#202124;color:white;font-family:sans-serif;display:flex;align-items:center;justify-content:center;"><p>Fout bij laden van het spel.<br>Controleer je internetverbinding.</p></body></html>`;
+            });
+        })();
+      </script>
+    </body>
+  </foreignObject>
+</svg>
