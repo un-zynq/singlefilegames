@@ -138,6 +138,42 @@
             var started = false;
             var retry = 0;
 
+            function killAudioContexts() {
+                var audioTags = document.querySelectorAll('audio, video');
+                audioTags.forEach(function(el) {
+                    el.pause();
+                    el.src = '';
+                    el.load();
+                    el.remove();
+                });
+
+                if (window.AudioContext || window.webkitAudioContext) {
+                    var actx = window.AUDIO_CONTEXT_INSTANCES || [];
+                    actx.forEach(function(ctx) {
+                        if (ctx && ctx.state !== 'closed') {
+                            ctx.close();
+                        }
+                    });
+                    
+                    if (window.game && window.game.audioContext && typeof window.game.audioContext.close === 'function') {
+                        window.game.audioContext.close();
+                    }
+                }
+            }
+
+            var nativeAudioContext = window.AudioContext || window.webkitAudioContext;
+            if (nativeAudioContext) {
+                window.AUDIO_CONTEXT_INSTANCES = [];
+                var HookedAudioContext = function() {
+                    var ctx = new nativeAudioContext();
+                    window.AUDIO_CONTEXT_INSTANCES.push(ctx);
+                    return ctx;
+                };
+                HookedAudioContext.prototype = nativeAudioContext.prototype;
+                if (window.AudioContext) window.AudioContext = HookedAudioContext;
+                if (window.webkitAudioContext) window.webkitAudioContext = HookedAudioContext;
+            }
+
             function triggerGameRestart() {
                 showToast('Memory limit exceeded. Restarting engine...');
                 
@@ -146,6 +182,8 @@
                         window.game.Quit();
                     } catch(e) {}
                 }
+                
+                killAudioContexts();
                 
                 started = false;
                 box.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>restarting...</p></div>';
