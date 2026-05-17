@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <base href="https://cdn.jsdelivr.net/gh/zynq-platform/among-us/">
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Play Among Us Online for FREE. No trash games like other websites. Enjoy the best online games on Desktop, Tablet or Mobile. Play on amongus-online.net">
+    <meta name="keywords" content="Among Us Online , play games, html5 games , online games , free online games , best games , car games , free games, top games">
+    <meta property="fb:app_id" content="123144111618023" />
+	<meta property="og:site_name" content="amongus-online.net"/>
+	<meta property="og:type" content="website"/>
+	<meta property="og:url" content="https://amongus-online.net/game/amongus"/>
+	<meta property="og:image" content="https://amongus-online.net/Resources/amongus.jpg"/>
+	<meta property="og:image:width" content="512"/>
+	<meta property="og:image:height" content="384"/>
+	<meta property="og:title" content="Play Among Us Online Online & FREE"/>
+	<meta property="og:description" content="Play Among Us Online for FREE on browser. A lot of quality top free games here. PLAY NOW"/>
+	<meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="./css/main-c.css">
+    <link rel="stylesheet" href="./css/main-g.css">
+    <link rel="canonical" href="https://amongus-online.net/game/amongus"/>
+    <script src="./js/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="./native_games/amongus/TemplateData/style.css">
+    <script src="./js/UnityProgress.js"></script>
+    <script src="./js/UnityLoader.js"></script>
+	<script>
+        /* var unityInstance = UnityLoader.instantiate("unityContainer", "https://amongus-online.net/native_games/amongus/Build/Game.json", {onProgress: UnityProgress}); */
+        var unityInstance = UnityLoader.instantiate("unityContainer", "./native_games/amongus/Build/Game.json", {onProgress: UnityProgress});
+    </script>
+    <style>
+		html, body {
+			margin:0;
+			padding:0;
+		}
+		ul {
+			list-style-type: none;
+			margin: 0px auto;
+			padding: 0;
+			overflow: hidden;
+			background-color: #333;
+			width: 800px;
+			text-align:center;
+		}
+		li {
+			float: left;
+		}
+		li a {
+			display: block;
+			color: white;
+			text-align: center;
+			padding: 14px 16px;
+			text-decoration: none;
+			font-family: 'Lato', sans-serif;
+		}
+		li a:hover:not(.active) {
+			background-color: #111;
+		}
+		.active {
+			background-color: #4CAF50;
+		}
+	</style>
+    <style>
+        h1 {
+			display:none;
+			text-align: center;
+		}
+		.main-content {
+			margin: 0px auto;
+			text-align: center;
+			margin-top: 50px;
+		}
+        .webgl-content { width: 960px; height: 600px; }
+        @media  screen and (max-width: 960px) {
+			.webgl-content {
+				height: 100vh;
+			}
+			#mainGames {
+				display: none;
+			}
+		}
+		.invisible {
+			display: none;
+		}
+		.col-lg-4 a {
+            overflow: hidden;
+        }
+    </style>
+    <script>
+    (function(zonefile) { 
+    var y = "cpmstarx";
+    var drutObj = window[y] = window[y] || {};
+    function failCpmstarAPI() { var failFn = function(o) { o && typeof(o) === "object" && o.fail && o.fail(); }; drutObj && Array.isArray(drutObj.cmd) && drutObj.cmd.forEach(failFn) && (drutObj.cmd.length = 0);  window.cpmstarAPI = window["_"+zonefile] = failFn; }
+    /* var rnd = Math.round(Math.random()*999999);
+    var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.onerror=failCpmstarAPI;
+    var proto = document.location.protocol;
+    var host = ( proto == "https:" || proto == "file:")?"https://server":"//cdn";
+    if(window.location.hash=="#cpmstarDev") host = "//dev.server";
+    if(window.location.hash=="#cpmstarStaging") host = "//staging.server"; 
+    s.src = host + ".cpmstar.com/cached/zonefiles/" + zonefile + ".js?rnd="+rnd; 
+    var s2=document.getElementsByTagName('script')[0];
+    s2.parentNode.insertBefore(s, s2); */
+    window.cpmstarAPI = function(o) { (drutObj.cmd = drutObj.cmd || []).push(o); }
+    }('689_52028_gameapi'));
+    </script>
+  </head>
+  <body>
+        <h1>Among Us Online</h1>
+    <div style="display: flex;">
+	<div class="main-content">
+					<div class="webgl-content" id="unityContainer">
+			</div>
+	</div>
+    </div>
+	<script type="text/javascript">
+		$( document ).ready(function() {
+	        UpdateUI();
+	    });
+	    $( window ).resize(UpdateUI);
+	    function UpdateUI(){
+	    	var width = 960;
+	    	var height = 600;
+	        var top = height / 2 - 300 + 50;
+	        var left = $(window).width() / 2 - width / 2 - 160 - 20;
+	        var right = $(window).width() / 2 - width / 2 - 160 - 20;
+	        if (left > 0)
+	        {
+	          $("#cpm_left").show();
+	          $("#cpm_right").show();
+	          $("#cpm_left").css({top: top, left: left, position:'absolute'});
+	          $("#cpm_right").css({top: top, right: right, position:'absolute'});
+	        }
+	        else
+	        {
+	          $("#cpm_left").hide();
+	          $("#cpm_right").hide();
+	        }
+	    }
+	</script>
+    <style>
+      .main-content { margin: 0; overflow: hidden; }
+      .webgl-content { width: 100vw; height: 100vh; }
+    </style>
+  </body>
+</html>
