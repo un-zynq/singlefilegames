@@ -14,7 +14,7 @@
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="stylesheet" type="text/css" href="game.css" />
-    <script type="text/javascript" src="game.js" defer></script>
+    <script type="text/javascript" src="game.js" defer onload="setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);setTimeout(function(){window.dispatchEvent(new Event('resize'));},500);"></script>
     <style>
       html, body, #ajaxbar, #game, #webgl, canvas {
         width: 100% !important;
