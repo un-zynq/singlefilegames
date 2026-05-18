@@ -10,37 +10,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     
     <style>
-        /* Base page layout - Dark Mode */
-        html, body {
-            background: #000000;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            padding: 0;
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-        
-        .webgl-content {
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000000;
-        }
-
-        #gameContainer {
-            width: 100% !important;
-            height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        /* Minimal modern black loading screen */
         #loadingScreen {
             position: fixed;
             top: 0;
@@ -54,6 +23,7 @@
             align-items: center;
             z-index: 9999;
             transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
         .loader-title {
@@ -68,7 +38,7 @@
         .progress-box {
             width: 200px;
             height: 2px;
-            background: #222222; /* Dark grey track */
+            background: #222222;
             border-radius: 2px;
             overflow: hidden;
         }
@@ -76,7 +46,7 @@
         #progressBar {
             width: 0%;
             height: 100%;
-            background: #FFFFFF; /* Pure white loading indicator */
+            background: #FFFFFF;
             transition: width 0.1s ease-out;
         }
 
