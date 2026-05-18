@@ -15,11 +15,13 @@
     <link rel="stylesheet" type="text/css" href="game.css" />
 
     <script type="text/javascript">
-      document.addEventListener("DOMContentLoaded", function() {
-        var script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = "./game.js";
-        document.head.appendChild(script);
+      window.addEventListener("load", function() {
+        setTimeout(function() {
+          var script = document.createElement("script");
+          script.type = "text/javascript";
+          script.src = "./game.js";
+          document.head.appendChild(script);
+        }, 50);
       });
     </script>
   </head>
