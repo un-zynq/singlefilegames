@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <base href="https://cdn.jsdelivr.net/gh/zynq-platform/drift-boss/" />
+    <base href="https://cdn.jsdelivr.net/gh/zynq-platform/drift-boss/">
     <meta
       name="description"
       content="Drift Boss, Drift Boss Unblocked, Drift Boss Math Playground"
@@ -10,128 +9,126 @@
     <meta property="og:image" content="drift-boss.png" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"
+      content="initial-scale=1.0001, minimum-scale=1.0001, maximum-scale=1.0001, user-scalable=no, minimal-ui"
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="stylesheet" type="text/css" href="game.css" />
-    <script type="text/javascript" src="game.js" defer onload="setTimeout(function(){window.dispatchEvent(new Event('resize'));},100);setTimeout(function(){window.dispatchEvent(new Event('resize'));},500);"></script>
-    <style>
-      html, body, #ajaxbar, #game, #webgl, canvas {
-        width: 100% !important;
-        height: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-      }
-    </style>
+
+    <script type="text/javascript">
+      document.addEventListener("DOMContentLoaded", function() {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = "./game.js";
+        document.head.appendChild(script);
+      });
+    </script>
   </head>
-  <body>
+  <body onload="setTimeout(function(){window.scrollTo(0,1)},1);">
     <div id="ajaxbar">
       <div id="game"><canvas id="canvas"></canvas></div>
       <div id="webgl"><canvas id="webglcanvas"></canvas></div>
-      
       <div id="orientate">
-        <img src="media/graphics/orientate/landscape.jpg" alt="Orientate" />
+        <img src="media/graphics/orientate/landscape.jpg" />
       </div>
-      
-      <div id="play" class="play">
-        <img src="media/graphics/splash/mobile/cover-start.jpg" alt="Start Game" />
+      <div id="play" class="play" onclick="">
+        <img src="media/graphics/splash/mobile/cover-start.jpg" />
       </div>
-
       <div id="MobileAdInGamePreroll">
         <div id="MobileAdInGamePreroll-Box">
           <div id="MobileAdInGamePreroll-Box-Header"></div>
           <a
             id="MobileAdInGamePreroll-Box-Close"
-            onclick="if(typeof MobileAdInGamePreroll !== 'undefined') MobileAdInGamePreroll.Close();"
+            onclick="MobileAdInGamePreroll.Close();"
           ></a>
-          <div id="MobileAdInGamePreroll-Box-Body" style="text-align: center;">
-            </div>
+          <div id="MobileAdInGamePreroll-Box-Body">
+            <center>
+              </center>
+          </div>
           <div id="MobileAdInGamePreroll-Box-Footer"></div>
         </div>
       </div>
-
       <div id="MobileAdInGamePreroll2">
         <div id="MobileAdInGamePreroll2-Box">
           <div id="MobileAdInGamePreroll2-Box-Header"></div>
           <a
             id="MobileAdInGamePreroll2-Box-Close"
-            onclick="if(typeof MobileAdInGamePreroll2 !== 'undefined') MobileAdInGamePreroll2.Close();"
+            onclick="MobileAdInGamePreroll.Close();"
           ></a>
-          <div id="MobileAdInGamePreroll2-Box-Body" style="text-align: center;">
-            </div>
+          <div id="MobileAdInGamePreroll2-Box-Body">
+            <center>
+              </center>
+          </div>
           <div id="MobileAdInGamePreroll2-Box-Footer"></div>
         </div>
       </div>
-
       <div id="MobileAdInGamePreroll3">
         <div id="MobileAdInGamePreroll3-Box">
           <div id="MobileAdInGamePreroll3-Box-Header"></div>
           <a
             id="MobileAdInGamePreroll3-Box-Close"
-            onclick="if(typeof MobileAdInGamePreroll3 !== 'undefined') MobileAdInGamePreroll3.Close();"
+            onclick="MobileAdInGamePreroll.Close();"
           ></a>
-          <div id="MobileAdInGamePreroll3-Box-Body" style="text-align: center;">
-            </div>
+          <div id="MobileAdInGamePreroll3-Box-Body">
+            <center>
+              </center>
+          </div>
           <div id="MobileAdInGamePreroll3-Box-Footer"></div>
         </div>
       </div>
-
-      <div id="MobileAdInGameHeader"></div>
-      <div id="MobileAdInGameHeader2"></div>
-      <div id="MobileAdInGameHeader3"></div>
-      <div id="MobileAdInGameFooter"></div>
-      <div id="MobileAdInGameFooter2"></div>
-      <div id="MobileAdInGameFooter3"></div>
-
+      <div id="MobileAdInGameHeader">
+        </div>
+      <div id="MobileAdInGameHeader2">
+        </div>
+      <div id="MobileAdInGameHeader3">
+        </div>
+      <div id="MobileAdInGameFooter">
+        </div>
+      <div id="MobileAdInGameFooter2">
+        </div>
+      <div id="MobileAdInGameFooter3">
+        </div>
       <div id="MobileAdInGameEnd">
         <div id="MobileAdInGameEnd-Box">
           <div id="MobileAdInGameEnd-Box-Header"></div>
           <a
             id="MobileAdInGameEnd-Box-Close"
-            onclick="if(typeof MobileAdInGameEnd !== 'undefined') MobileAdInGameEnd.Close();"
+            onclick="MobileAdInGameEnd.Close();"
           ></a>
-          <div id="MobileAdInGameEnd-Box-Body" style="text-align: center;"></div>
+          <div id="MobileAdInGameEnd-Box-Body">
+            <center>
+            </center>
+          </div>
           <div id="MobileAdInGameEnd-Box-Footer"></div>
         </div>
       </div>
-
       <div id="MobileAdInGameEnd2">
         <div id="MobileAdInGameEnd2-Box">
           <div id="MobileAdInGameEnd2-Box-Header"></div>
           <a
             id="MobileAdInGameEnd2-Box-Close"
-            onclick="if(typeof MobileAdInGameEnd2 !== 'undefined') MobileAdInGameEnd2.Close();"
+            onclick="MobileAdInGameEnd.Close();"
           ></a>
-          <div id="MobileAdInGameEnd2-Box-Body" style="text-align: center;"></div>
+          <div id="MobileAdInGameEnd2-Box-Body">
+            <center>
+            </center>
+          </div>
           <div id="MobileAdInGameEnd2-Box-Footer"></div>
         </div>
       </div>
-
       <div id="MobileAdInGameEnd3">
         <div id="MobileAdInGameEnd3-Box">
           <div id="MobileAdInGameEnd3-Box-Header"></div>
           <a
             id="MobileAdInGameEnd3-Box-Close"
-            onclick="if(typeof MobileAdInGameEnd3 !== 'undefined') MobileAdInGameEnd3.Close();"
+            onclick="MobileAdInGameEnd.Close();"
           ></a>
-          <div id="MobileAdInGameEnd3-Box-Body" style="text-align: center;"></div>
+          <div id="MobileAdInGameEnd3-Box-Body">
+            <center>
+            </center>
+          </div>
           <div id="MobileAdInGameEnd3-Box-Footer"></div>
         </div>
       </div>
     </div>
-    <script type="text/javascript">
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          window.dispatchEvent(new Event('resize'));
-        }, 100);
-        setTimeout(function() {
-          window.dispatchEvent(new Event('resize'));
-        }, 500);
-      });
-    </script>
   </body>
 </html>
