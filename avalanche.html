@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="https://cdn.jsdelivr.net/gh/zynq-platform/avalanche/">
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFFFFF">
+    <title>Avalanche</title>
+    
+    <style>
+        html, body {
+            background: #FFFFFF;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        #ruffle {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #FFFFFF;
+        }
+
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+        }
+
+        .loader-title {
+            color: #111111;
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .progress-box {
+            width: 200px;
+            height: 2px;
+            background: #EAEAEA;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 100%;
+            background: #111111;
+            transition: width 0.3s ease-out;
+        }
+
+        #progressText {
+            color: #888888;
+            margin-top: 12px;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+    </style>
+
+    <script src="js/main.js"></script>
+    <script src="ruffle.js"></script>
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = {
+            "autoplay": "on",
+            "unmuteOverlay": "hidden"
+        };
+    </script>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-title">Avalanche</div>
+        <div class="progress-box">
+            <div id="progressBar"></div>
+        </div>
+        <div id="progressText">Loading...</div>
+    </div>
+
+    <div id="ruffle"></div>
+
+    <script>
+        window.addEventListener("load", (event) => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
+            const container = document.getElementById("ruffle");
+            
+            player.id = "player";
+            player.style.width = "100%";
+            player.style.height = "100%";
+            container.appendChild(player);
+            
+            player.load("https://cdn.jsdelivr.net/gh/zynq-platform/avalanche/avalanche.swf");
+
+            var progressBar = document.getElementById("progressBar");
+            var progressText = document.getElementById("progressText");
+            var loader = document.getElementById("loadingScreen");
+
+            if (progressBar && progressText) {
+                progressBar.style.width = "100%";
+                progressText.innerHTML = "100%";
+            }
+
+            setTimeout(function() {
+                if (loader) {
+                    loader.style.opacity = "0";
+                    loader.style.transform = "scale(0.98)";
+                    setTimeout(function() {
+                        loader.style.display = "none";
+                    }, 400);
+                }
+            }, 600); 
+        });
+    </script>
+
+</body>
+</html>
