@@ -10,6 +10,7 @@ class GameEmbed extends HTMLElement {
         super();
         this.ui = null;
         this._currentPct = 0;
+        this._abortController = null;
         this.attachShadow({ mode: "open" });
     }
 
@@ -66,14 +67,14 @@ class GameEmbed extends HTMLElement {
                     background: #0a0a0c;
                     display: flex; flex-direction: column; align-items: center; justify-content: center;
                     z-index: 9999;
-                    transition: opacity 0.4s ease, visibility 0.4s ease;
+                    transition: opacity 0.3s ease, visibility 0.3s ease;
                 }
                 .loader-overlay.hidden {
                     opacity: 0; visibility: hidden; pointer-events: none;
                 }
-                .loader-card { text-align: center; width: 200px; box-sizing: border-box; }
+                .loader-card { text-align: center; width: 200px; box-sizing: border-box; position: relative; }
                 .progress-track { width: 100%; height: 1px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
-                .progress-bar { width: 0%; height: 100%; background: #ffffff; transition: width 0.1s linear; }
+                .progress-bar { width: 0%; height: 100%; background: #ffffff; transition: width 0.08s linear; }
                 .error-msg { color: #ff5252; font-size: 0.9rem; text-align: center; line-height: 1.4; padding: 1rem; border: 1px solid rgba(255, 82, 82, 0.2); background: rgba(255, 82, 82, 0.05); border-radius: 4px; }
             </style>
             <div class="loader-overlay" id="loader">
@@ -106,8 +107,11 @@ class GameEmbed extends HTMLElement {
     }
 
     showError(message) {
-        if (!this.ui || !this.ui.track) return;
+        if (!this.ui) return;
         this.ui.track.style.display = "none";
+        const oldErr = this.ui.card.querySelector(".error-msg");
+        if (oldErr) oldErr.remove();
+
         const err = document.createElement("div");
         err.className = "error-msg";
         err.innerHTML = `<strong>Launch Error:</strong><br>${message}`;
@@ -115,15 +119,20 @@ class GameEmbed extends HTMLElement {
     }
 
     async loadGame(alias, commitHash) {
+        if (this._abortController) {
+            this._abortController.abort();
+        }
+        this._abortController = new AbortController();
+        const signal = this._abortController.signal;
+
         this._currentPct = 0;
         
         const oldIframe = this.shadowRoot.querySelector("iframe");
         if (oldIframe) oldIframe.remove();
 
         if (this.ui) {
-            const oldError = this.ui.card.querySelector(".error-msg");
-            if (oldError) oldError.remove();
-            
+            const oldErr = this.ui.card.querySelector(".error-msg");
+            if (oldErr) oldErr.remove();
             this.ui.track.style.display = "block";
             this.ui.bar.style.width = "0%";
             this.ui.overlay.classList.remove("hidden");
@@ -133,7 +142,7 @@ class GameEmbed extends HTMLElement {
         this.updateProgress(0);
 
         try {
-            const listReq = await fetch(`${cdnUrl}/game_list.json`);
+            const listReq = await fetch(`${cdnUrl}/game_list.json`, { signal });
             if (!listReq.ok) throw new Error("Could not download the game database.");
             const data = await listReq.json();
 
@@ -153,12 +162,12 @@ class GameEmbed extends HTMLElement {
             const decoder = new TextDecoder();
 
             if (group2.includes(alias)) {
-                this.updateProgress(20);
-                const response = await fetch(`${cdnUrl}/external/${alias}.html`);
+                this.updateProgress(10);
+                const response = await fetch(`${cdnUrl}/external/${alias}.html`, { signal });
                 if (!response.ok) throw new Error("External game file missing.");
                 
                 const reader = response.body.getReader();
-                this.updateProgress(60);
+                this.updateProgress(30);
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -173,51 +182,56 @@ class GameEmbed extends HTMLElement {
             } 
 
             if (group1.includes(alias)) {
-                const nrReq = await fetch(`${cdnUrl}/${alias}/nr.txt`);
+                const nrReq = await fetch(`${cdnUrl}/${alias}/nr.txt`, { signal });
                 if (!nrReq.ok) throw new Error("Configuration file (nr.txt) is missing.");
                 
                 const nrText = await nrReq.text();
                 const totalParts = parseInt(nrText.trim(), 10);
                 if (isNaN(totalParts) || totalParts <= 0) throw new Error("Invalid chunk count data.");
 
-                this.updateProgress(10);
+                this.updateProgress(5);
 
-                const partFetches = [];
+                const partStreams = [];
+                const partWeights = 100 / totalParts;
+
                 for (let i = 1; i <= totalParts; i++) {
-                    partFetches.push(fetch(`${cdnUrl}/${alias}/src.part${i}.html`));
+                    const partUrl = `${cdnUrl}/${alias}/src.part${i}.html`;
+                    partStreams.push(fetch(partUrl, { signal }).then(res => {
+                        if (!res.ok) throw new Error(`Part ${i} stream dropped.`);
+                        return res.body.getReader();
+                    }));
                 }
 
-                for (let i = 0; i < totalParts; i++) {
-                    let basePct = (i / totalParts) * 100;
-                    let nextBasePct = ((i + 1) / totalParts) * 100;
-                    
-                    this.updateProgress(basePct);
+                const readers = await Promise.all(partStreams);
 
-                    const res = await partFetches[i];
-                    if (!res.ok) throw new Error(`Part ${i + 1} failed to download.`);
-                    
-                    const reader = res.body.getReader();
+                for (let i = 0; i < readers.length; i++) {
+                    const reader = readers[i];
+                    const startPct = i * partWeights;
                     
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
+                        
                         d.write(decoder.decode(value, { stream: true }));
-                        basePct = Math.min(nextBasePct, basePct + 0.5);
-                        this.updateProgress(basePct);
+                        
+                        const progressInChunk = partWeights * 0.5; 
+                        this.updateProgress(startPct + progressInChunk);
                     }
+                    this.updateProgress((i + 1) * partWeights);
                 }
 
                 this.updateProgress(100);
                 d.close();
                 
                 setTimeout(() => {
-                    this.ui.overlay.classList.add("hidden");
-                }, 200);
+                    if (!signal.aborted) this.ui.overlay.classList.add("hidden");
+                }, 150);
             } else {
                 throw new Error(`The game "${alias}" was not found in this repository.`);
             }
 
         } catch (error) {
+            if (error.name === 'AbortError') return;
             console.error(error);
             this.showError(error.message);
         }
