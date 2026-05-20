@@ -1,5 +1,3 @@
-// game-embed.js
-
 const DEFAULT_COMMIT = "576469a8ef60ab648072d27dff1bf2b47413e017";
 const BASE_CDN = "https://cdn.jsdelivr.net/gh/un-zynq/truesinglefilegames@";
 
@@ -14,7 +12,6 @@ class GameEmbed extends HTMLElement {
         this.attachShadow({ mode: "open" });
     }
 
-    // Static helper to fetch the unified game list
     static async fetchGameList(commitHash = DEFAULT_COMMIT) {
         try {
             const res = await fetch(`${BASE_CDN}${commitHash}/game_list.json`);
@@ -44,7 +41,6 @@ class GameEmbed extends HTMLElement {
     set commit(v) { this.setAttribute("commit", v); }
 
     connectedCallback() {
-        // Minimalist UI: 1px white bar on a dark background
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
@@ -74,19 +70,14 @@ class GameEmbed extends HTMLElement {
                 .loader-overlay.hidden {
                     opacity: 0; visibility: hidden; pointer-events: none;
                 }
-                .loader-card { text-align: center; padding: 2rem; width: 320px; box-sizing: border-box; }
-                .status-txt { font-size: 0.85rem; color: #888; margin-bottom: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
-                .percentage-txt { font-size: 3rem; font-weight: 200; color: #fff; margin-bottom: 15px; font-variant-numeric: tabular-nums; }
-                
-                /* Ultra-thin 1px progress track and bar */
-                .progress-track { width: 100%; height: 1px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
-                .progress-bar { width: 0%; height: 100%; background: #ffffff; transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
-                
+                .loader-card { text-align: center; width: 200px; box-sizing: border-box; }
+                .percentage-txt { font-size: 0.9rem; font-weight: 400; color: rgba(255, 255, 255, 0.4); margin-bottom: 8px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
+                .progress-track { width: 100%; height: 1px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
+                .progress-bar { width: 0%; height: 100%; background: #ffffff; transition: width 0.1s linear; }
                 .error-msg { color: #ff5252; font-size: 0.9rem; text-align: center; line-height: 1.4; padding: 1rem; border: 1px solid rgba(255, 82, 82, 0.2); background: rgba(255, 82, 82, 0.05); border-radius: 4px; }
             </style>
             <div class="loader-overlay" id="loader">
                 <div class="loader-card" id="loader-card">
-                    <div class="status-txt" id="status">Initializing...</div>
                     <div class="percentage-txt" id="percentage">0%</div>
                     <div class="progress-track">
                         <div class="progress-bar" id="bar"></div>
@@ -98,7 +89,6 @@ class GameEmbed extends HTMLElement {
         this.ui = {
             overlay: this.shadowRoot.querySelector("#loader"),
             card: this.shadowRoot.querySelector("#loader-card"),
-            status: this.shadowRoot.querySelector("#status"),
             percent: this.shadowRoot.querySelector("#percentage"),
             bar: this.shadowRoot.querySelector("#bar")
         };
@@ -108,9 +98,8 @@ class GameEmbed extends HTMLElement {
         }
     }
 
-    updateProgress(text, pct) {
-        if (!this.ui || !this.ui.status) return;
-        this.ui.status.textContent = text;
+    updateProgress(pct) {
+        if (!this.ui || !this.ui.percent) return;
         const clampedPct = Math.min(100, Math.max(0, Math.floor(pct)));
         this.ui.percent.textContent = `${clampedPct}%`;
         this.ui.bar.style.width = `${clampedPct}%`;
@@ -128,17 +117,15 @@ class GameEmbed extends HTMLElement {
         if (this.ui && this.ui.overlay) {
             this.ui.overlay.classList.remove("hidden");
             this.ui.card.innerHTML = `
-                <div class="status-txt" id="status">Fetching configuration...</div>
                 <div class="percentage-txt" id="percentage">0%</div>
                 <div class="progress-track"><div class="progress-bar" id="bar"></div></div>
             `;
-            this.ui.status = this.shadowRoot.querySelector("#status");
             this.ui.percent = this.shadowRoot.querySelector("#percentage");
             this.ui.bar = this.shadowRoot.querySelector("#bar");
         }
 
         const cdnUrl = `${BASE_CDN}${commitHash}`;
-        this.updateProgress("Fetching setup...", 0);
+        this.updateProgress(0);
 
         try {
             const listReq = await fetch(`${cdnUrl}/game_list.json`);
@@ -160,14 +147,13 @@ class GameEmbed extends HTMLElement {
 
             const decoder = new TextDecoder();
 
-            // ROUTE GROUP 2: Streaming
             if (group2.includes(alias)) {
-                this.updateProgress("Streaming assets...", 20);
+                this.updateProgress(20);
                 const response = await fetch(`${cdnUrl}/external/${alias}.html`);
                 if (!response.ok) throw new Error("External game file missing.");
                 
                 const reader = response.body.getReader();
-                this.updateProgress("Loading engine...", 60);
+                this.updateProgress(60);
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -175,13 +161,12 @@ class GameEmbed extends HTMLElement {
                     d.write(decoder.decode(value, { stream: true }));
                 }
                 
-                this.updateProgress("Finishing...", 100);
+                this.updateProgress(100);
                 d.close();
                 this.ui.overlay.classList.add("hidden");
                 return;
             } 
 
-            // ROUTE GROUP 1: Chunked Parallel Download
             if (group1.includes(alias)) {
                 const nrReq = await fetch(`${cdnUrl}/${alias}/nr.txt`);
                 if (!nrReq.ok) throw new Error("Configuration file (nr.txt) is missing.");
@@ -190,7 +175,7 @@ class GameEmbed extends HTMLElement {
                 const totalParts = parseInt(nrText.trim(), 10);
                 if (isNaN(totalParts) || totalParts <= 0) throw new Error("Invalid chunk count data.");
 
-                this.updateProgress("Opening pipelines...", 10);
+                this.updateProgress(10);
 
                 const partFetches = [];
                 for (let i = 1; i <= totalParts; i++) {
@@ -201,7 +186,7 @@ class GameEmbed extends HTMLElement {
                     let basePct = (i / totalParts) * 100;
                     let nextBasePct = ((i + 1) / totalParts) * 100;
                     
-                    this.updateProgress(`Processing part ${i + 1} of ${totalParts}...`, basePct);
+                    this.updateProgress(basePct);
 
                     const res = await partFetches[i];
                     if (!res.ok) throw new Error(`Part ${i + 1} failed to download.`);
@@ -213,11 +198,11 @@ class GameEmbed extends HTMLElement {
                         if (done) break;
                         d.write(decoder.decode(value, { stream: true }));
                         basePct = Math.min(nextBasePct, basePct + 0.5);
-                        this.updateProgress(`Streaming core data...`, basePct);
+                        this.updateProgress(basePct);
                     }
                 }
 
-                this.updateProgress("Launching engine...", 100);
+                this.updateProgress(100);
                 d.close();
                 
                 setTimeout(() => {
