@@ -9,6 +9,7 @@ class GameEmbed extends HTMLElement {
     constructor() {
         super();
         this.ui = null;
+        this._currentPct = 0;
         this.attachShadow({ mode: "open" });
     }
 
@@ -71,14 +72,12 @@ class GameEmbed extends HTMLElement {
                     opacity: 0; visibility: hidden; pointer-events: none;
                 }
                 .loader-card { text-align: center; width: 200px; box-sizing: border-box; }
-                .percentage-txt { font-size: 0.9rem; font-weight: 400; color: rgba(255, 255, 255, 0.4); margin-bottom: 8px; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
                 .progress-track { width: 100%; height: 1px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
                 .progress-bar { width: 0%; height: 100%; background: #ffffff; transition: width 0.1s linear; }
                 .error-msg { color: #ff5252; font-size: 0.9rem; text-align: center; line-height: 1.4; padding: 1rem; border: 1px solid rgba(255, 82, 82, 0.2); background: rgba(255, 82, 82, 0.05); border-radius: 4px; }
             </style>
             <div class="loader-overlay" id="loader">
                 <div class="loader-card" id="loader-card">
-                    <div class="percentage-txt" id="percentage">0%</div>
                     <div class="progress-track">
                         <div class="progress-bar" id="bar"></div>
                     </div>
@@ -89,7 +88,6 @@ class GameEmbed extends HTMLElement {
         this.ui = {
             overlay: this.shadowRoot.querySelector("#loader"),
             card: this.shadowRoot.querySelector("#loader-card"),
-            percent: this.shadowRoot.querySelector("#percentage"),
             bar: this.shadowRoot.querySelector("#bar")
         };
 
@@ -99,10 +97,11 @@ class GameEmbed extends HTMLElement {
     }
 
     updateProgress(pct) {
-        if (!this.ui || !this.ui.percent) return;
-        const clampedPct = Math.min(100, Math.max(0, Math.floor(pct)));
-        this.ui.percent.textContent = `${clampedPct}%`;
-        this.ui.bar.style.width = `${clampedPct}%`;
+        if (!this.ui || !this.ui.bar) return;
+        if (pct > this._currentPct) {
+            this._currentPct = Math.min(100, Math.max(0, pct));
+            this.ui.bar.style.width = `${this._currentPct}%`;
+        }
     }
 
     showError(message) {
@@ -111,16 +110,15 @@ class GameEmbed extends HTMLElement {
     }
 
     async loadGame(alias, commitHash) {
+        this._currentPct = 0;
         const oldIframe = this.shadowRoot.querySelector("iframe");
         if (oldIframe) oldIframe.remove();
 
         if (this.ui && this.ui.overlay) {
             this.ui.overlay.classList.remove("hidden");
             this.ui.card.innerHTML = `
-                <div class="percentage-txt" id="percentage">0%</div>
                 <div class="progress-track"><div class="progress-bar" id="bar"></div></div>
             `;
-            this.ui.percent = this.shadowRoot.querySelector("#percentage");
             this.ui.bar = this.shadowRoot.querySelector("#bar");
         }
 
