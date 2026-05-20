@@ -78,7 +78,7 @@ class GameEmbed extends HTMLElement {
             </style>
             <div class="loader-overlay" id="loader">
                 <div class="loader-card" id="loader-card">
-                    <div class="progress-track">
+                    <div class="progress-track" id="track">
                         <div class="progress-bar" id="bar"></div>
                     </div>
                 </div>
@@ -88,6 +88,7 @@ class GameEmbed extends HTMLElement {
         this.ui = {
             overlay: this.shadowRoot.querySelector("#loader"),
             card: this.shadowRoot.querySelector("#loader-card"),
+            track: this.shadowRoot.querySelector("#track"),
             bar: this.shadowRoot.querySelector("#bar")
         };
 
@@ -105,21 +106,27 @@ class GameEmbed extends HTMLElement {
     }
 
     showError(message) {
-        if (!this.ui) return;
-        this.ui.card.innerHTML = `<div class="error-msg"><strong>Launch Error:</strong><br>${message}</div>`;
+        if (!this.ui || !this.ui.track) return;
+        this.ui.track.style.display = "none";
+        const err = document.createElement("div");
+        err.className = "error-msg";
+        err.innerHTML = `<strong>Launch Error:</strong><br>${message}`;
+        this.ui.card.appendChild(err);
     }
 
     async loadGame(alias, commitHash) {
         this._currentPct = 0;
+        
         const oldIframe = this.shadowRoot.querySelector("iframe");
         if (oldIframe) oldIframe.remove();
 
-        if (this.ui && this.ui.overlay) {
+        if (this.ui) {
+            const oldError = this.ui.card.querySelector(".error-msg");
+            if (oldError) oldError.remove();
+            
+            this.ui.track.style.display = "block";
+            this.ui.bar.style.width = "0%";
             this.ui.overlay.classList.remove("hidden");
-            this.ui.card.innerHTML = `
-                <div class="progress-track"><div class="progress-bar" id="bar"></div></div>
-            `;
-            this.ui.bar = this.shadowRoot.querySelector("#bar");
         }
 
         const cdnUrl = `${BASE_CDN}${commitHash}`;
