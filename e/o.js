@@ -1,6 +1,6 @@
 const DEFAULT_COMMIT = "576469a8ef60ab648072d27dff1bf2b47413e017";
 // De nieuwe basis URL waar alle game source bestanden en game_list.json staan
-const BASE_CDN = "https://f6f5d08b-c5b9-4ffa-a374-f549e45c2c5d363158cb-1dae-40eb-a1.pages.dev/";
+const BASE_CDN = "https://nxyderrr-assets.pages.dev/";
 
 class GameEmbed extends HTMLElement {
     static get observedAttributes() {
