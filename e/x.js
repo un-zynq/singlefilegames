@@ -36,9 +36,23 @@ class GameEmbed extends HTMLElement {
             <style>
                 :host { display:block; width:100%; height:100%; position:relative; background:#0a0a0c; overflow:hidden; }
                 iframe { width:100%; height:100%; border:0; background:#000; }
-                .loader { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:#0a0a0c; z-index:10; }
-                .bar { width:200px; height:2px; background:rgba(255,255,255,0.1); overflow:hidden; }
-                .fill { width:0%; height:100%; background:#fff; transition:width .1s; }
+                .loader {
+                    position:absolute; inset:0;
+                    display:flex; align-items:center; justify-content:center;
+                    background:#0a0a0c;
+                    z-index:10;
+                    transition:opacity .3s;
+                }
+                .bar {
+                    width:220px; height:2px;
+                    background:rgba(255,255,255,0.08);
+                    overflow:hidden;
+                }
+                .fill {
+                    width:0%; height:100%;
+                    background:#fff;
+                    transition:width .08s linear;
+                }
                 .hidden { opacity:0; pointer-events:none; }
             </style>
 
@@ -73,19 +87,68 @@ class GameEmbed extends HTMLElement {
         this.ui.loader.classList.remove("hidden");
 
         try {
-            const res = await fetch(`${BASE_CDN}external/${alias}.html`, { signal });
-            if (!res.ok) throw new Error("Game niet gevonden");
+            // 🔥 SMART STEP 1: load game list
+            const listRes = await fetch(`${BASE_CDN}game_list.json`, { signal });
+            if (!listRes.ok) throw new Error("Game DB missing");
+            const data = await listRes.json();
 
-            this.updateProgress(30);
+            const chunked = data[0] || [];
+            const streamed = data[1] || [];
 
-            const html = await res.text();
+            const cdn = BASE_CDN;
 
-            // 🔥 MODERN PART: Blob URL i.p.v document.write
+            let html = "";
+
+            this.updateProgress(10);
+
+            // 🔥 STREAMED GAME (full HTML stream)
+            if (streamed.includes(alias)) {
+                const res = await fetch(`${cdn}external/${alias}.html`, { signal });
+                if (!res.ok) throw new Error("External game missing");
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    html += decoder.decode(value, { stream: true });
+                }
+            }
+
+            // 🔥 CHUNKED GAME (multi-part rebuild)
+            else if (chunked.includes(alias)) {
+                const nr = await fetch(`${cdn}${alias}/nr.txt`, { signal });
+                if (!nr.ok) throw new Error("nr.txt missing");
+
+                const total = parseInt(await nr.text(), 10);
+
+                const parts = [];
+
+                for (let i = 1; i <= total; i++) {
+                    const partRes = await fetch(`${cdn}${alias}/src.part${i}.html`, { signal });
+                    if (!partRes.ok) throw new Error(`part ${i} missing`);
+
+                    const text = await partRes.text();
+                    parts.push(text);
+
+                    this.updateProgress(10 + (i / total) * 60);
+                }
+
+                html = parts.join("");
+            } else {
+                throw new Error("Game not found in list");
+            }
+
+            this.updateProgress(85);
+
+            // 🔥 MODERN STEP: Blob URL instead of document.write
             const blob = new Blob([html], { type: "text/html" });
             const url = URL.createObjectURL(blob);
 
             const iframe = document.createElement("iframe");
-            iframe.sandbox = "allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads";
+            iframe.sandbox =
+                "allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads";
             iframe.allow = "autoplay; fullscreen; gamepad; pointer-lock";
             iframe.src = url;
 
@@ -97,13 +160,12 @@ class GameEmbed extends HTMLElement {
                 this.ui.loader.classList.add("hidden");
             }, 150);
 
-            // cleanup
             setTimeout(() => URL.revokeObjectURL(url), 60000);
 
         } catch (e) {
             if (e.name === "AbortError") return;
-            this.ui.bar.style.background = "red";
             console.error(e);
+            this.ui.bar.style.background = "red";
         }
     }
 }
