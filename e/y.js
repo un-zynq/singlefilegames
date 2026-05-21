@@ -20,17 +20,6 @@ class GameEmbed extends HTMLElement {
     get commit() { return this.getAttribute("commit") || DEFAULT_COMMIT; }
     set commit(v) { this.setAttribute("commit", v); }
 
-    static async fetchGameList() {
-        const res = await fetch(`${BASE_CDN}game_list.json`);
-        if (!res.ok) throw new Error("Failed to fetch game list.");
-        const data = await res.json();
-
-        const group1 = (data[0] || []).map(alias => ({ alias, type: "chunked" }));
-        const group2 = (data[1] || []).map(alias => ({ alias, type: "streamed" }));
-
-        return [...group1, ...group2];
-    }
-
     connectedCallback() {
         this.shadowRoot.innerHTML = `
             <style>
@@ -87,25 +76,19 @@ class GameEmbed extends HTMLElement {
         this.ui.loader.classList.remove("hidden");
 
         try {
-            // 🔥 SMART STEP 1: load game list
             const listRes = await fetch(`${BASE_CDN}game_list.json`, { signal });
-            if (!listRes.ok) throw new Error("Game DB missing");
             const data = await listRes.json();
 
             const chunked = data[0] || [];
             const streamed = data[1] || [];
 
-            const cdn = BASE_CDN;
+            this.updateProgress(10);
 
             let html = "";
 
-            this.updateProgress(10);
-
-            // 🔥 STREAMED GAME (full HTML stream)
+            // 🔥 STREAMED GAME
             if (streamed.includes(alias)) {
-                const res = await fetch(`${cdn}external/${alias}.html`, { signal });
-                if (!res.ok) throw new Error("External game missing");
-
+                const res = await fetch(`${BASE_CDN}external/${alias}.html`, { signal });
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
 
@@ -116,41 +99,37 @@ class GameEmbed extends HTMLElement {
                 }
             }
 
-            // 🔥 CHUNKED GAME (multi-part rebuild)
+            // 🔥 CHUNKED GAME
             else if (chunked.includes(alias)) {
-                const nr = await fetch(`${cdn}${alias}/nr.txt`, { signal });
-                if (!nr.ok) throw new Error("nr.txt missing");
-
+                const nr = await fetch(`${BASE_CDN}${alias}/nr.txt`, { signal });
                 const total = parseInt(await nr.text(), 10);
 
-                const parts = [];
-
                 for (let i = 1; i <= total; i++) {
-                    const partRes = await fetch(`${cdn}${alias}/src.part${i}.html`, { signal });
-                    if (!partRes.ok) throw new Error(`part ${i} missing`);
-
-                    const text = await partRes.text();
-                    parts.push(text);
+                    const part = await fetch(`${BASE_CDN}${alias}/src.part${i}.html`, { signal });
+                    html += await part.text();
 
                     this.updateProgress(10 + (i / total) * 60);
                 }
-
-                html = parts.join("");
             } else {
-                throw new Error("Game not found in list");
+                throw new Error("Game not found");
             }
 
             this.updateProgress(85);
 
-            // 🔥 MODERN STEP: Blob URL instead of document.write
-            const blob = new Blob([html], { type: "text/html" });
-            const url = URL.createObjectURL(blob);
+            // 🔥 FIX FOR RELATIVE PATHS (IMPORTANT)
+            const wrapped = `
+                <base href="${BASE_CDN}">
+                ${html}
+            `;
 
             const iframe = document.createElement("iframe");
-            iframe.sandbox =
-                "allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads";
+            iframe.setAttribute("sandbox",
+                "allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-pointer-lock allow-downloads"
+            );
             iframe.allow = "autoplay; fullscreen; gamepad; pointer-lock";
-            iframe.src = url;
+
+            // 🔥 MODERN FIX: srcdoc instead of blob/document.write
+            iframe.srcdoc = wrapped;
 
             this.shadowRoot.appendChild(iframe);
 
@@ -159,8 +138,6 @@ class GameEmbed extends HTMLElement {
             setTimeout(() => {
                 this.ui.loader.classList.add("hidden");
             }, 150);
-
-            setTimeout(() => URL.revokeObjectURL(url), 60000);
 
         } catch (e) {
             if (e.name === "AbortError") return;
